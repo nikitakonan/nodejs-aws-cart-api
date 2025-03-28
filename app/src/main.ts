@@ -1,5 +1,4 @@
 import { NestFactory } from '@nestjs/core';
-
 import helmet from 'helmet';
 
 import { AppModule } from './app.module';
@@ -21,4 +20,5 @@ async function bootstrap() {
     console.log('App is running on %s port', port);
   });
 }
+
 bootstrap();

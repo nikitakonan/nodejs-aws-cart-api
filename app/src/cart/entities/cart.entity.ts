@@ -30,6 +30,6 @@ export class CartEntity {
   })
   status: CartStatuses;
 
-  @OneToMany(() => CartItemEntity, (cartItem) => cartItem.cart)
+  @OneToMany(() => CartItemEntity, (cartItem) => cartItem.cart, {})
   items: CartItemEntity[];
 }

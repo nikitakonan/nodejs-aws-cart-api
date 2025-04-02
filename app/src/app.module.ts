@@ -13,20 +13,43 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     AuthModule,
     CartModule,
     OrderModule,
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({
+      envFilePath: [
+        // '.env.development',
+        //
+        '.env',
+      ],
+      isGlobal: true,
+    }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        type: 'postgres',
-        host: configService.get('PG_HOST'),
-        port: Number(configService.get('PG_PORT')),
-        username: configService.get('PG_USER'),
-        password: configService.get('PG_PASSWORD'),
-        database: configService.get('PG_DB_NAME'),
-        entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: configService.get('NODE_ENV') === 'development',
-      }),
+      useFactory: (configService: ConfigService) => {
+        const nodeEnv = configService.get('NODE_ENV');
+        const host = configService.get('PG_HOST');
+        const isDev = nodeEnv === 'development';
+        const synchronize = isDev;
+        console.log(`Database for ${nodeEnv} at ${host}`);
+        console.log(`Syncing is ${synchronize ? 'on' : 'off'}`);
+        return {
+          type: 'postgres',
+          host,
+          port: Number(configService.get('PG_PORT')),
+          username: configService.get('PG_USER'),
+          password: configService.get('PG_PASSWORD'),
+          database: configService.get('PG_DB_NAME'),
+          entities: [__dirname + '/**/*.entity{.ts,.js}'],
+          synchronize,
+          ssl: !isDev,
+          extra: isDev
+            ? undefined
+            : {
+                ssl: {
+                  rejectUnauthorized: false,
+                },
+              },
+        };
+      },
     }),
   ],
   controllers: [AppController],

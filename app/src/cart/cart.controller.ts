@@ -73,7 +73,7 @@ export class CartController {
 
     const { id: cartId, items } = cart;
     const total = calculateCartTotal(items);
-    const order = this.orderService.create({
+    const order = await this.orderService.create({
       userId,
       cartId,
       items: items.map(({ product, count }) => ({
@@ -83,7 +83,8 @@ export class CartController {
       address: body.address,
       total,
     });
-    this.cartService.removeByUserId(userId);
+    // TODO change status to ordered
+    await this.cartService.removeByUserId(userId);
 
     return {
       order,
@@ -92,7 +93,7 @@ export class CartController {
 
   @UseGuards(BasicAuthGuard)
   @Get('order')
-  getOrder(): Order[] {
+  async getOrder() {
     return this.orderService.getAll();
   }
 }

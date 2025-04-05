@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { type Cart } from '../models';
 import { type PutCartPayload } from 'src/order/type';
 import { CartEntity } from '../entities/cart.entity';
@@ -15,7 +15,7 @@ function mapCartEntityToCart(cartEntity: CartEntity): Cart {
     status: cartEntity.status,
     items: cartEntity.items.map((item) => ({
       product: {
-        id: 'TODO',
+        id: item.productId,
         title: 'TODO',
         description: 'TODO',
         price: 0,
@@ -27,6 +27,8 @@ function mapCartEntityToCart(cartEntity: CartEntity): Cart {
 
 @Injectable()
 export class CartService {
+  private readonly logger = new Logger(CartService.name);
+
   constructor(
     @InjectRepository(CartEntity)
     private cartRepository: Repository<CartEntity>,
@@ -66,21 +68,36 @@ export class CartService {
   }
 
   async updateByUserId(userId: string, payload: PutCartPayload): Promise<Cart> {
+    this.logger.log(`Updating cart for user ${userId} with payload`, payload);
     const userCart = await this.findOrCreateByUserId(userId);
 
-    const cartEntity = await this.cartRepository.findOneBy({ id: userCart.id });
+    if (payload.count < 1) {
+      await this.cartItemsRepository.delete({
+        cart: { id: userCart.id },
+        productId: payload.product.id,
+      });
+    } else {
+      const cartItem = await this.cartItemsRepository.findOneBy({
+        cart: { id: userCart.id },
+        productId: payload.product.id,
+      });
 
-    const cartItem = new CartItemEntity();
-    cartItem.cart = cartEntity;
-    cartItem.productId = payload.product.id;
-    cartItem.count = payload.count;
+      if (cartItem) {
+        cartItem.count = payload.count;
+        await this.cartItemsRepository.save(cartItem);
+      } else {
+        const cartItem = new CartItemEntity();
+        cartItem.cart = new CartEntity();
+        cartItem.cart.id = userCart.id;
+        cartItem.productId = payload.product.id;
+        cartItem.count = payload.count;
 
-    await this.cartItemsRepository.save(cartItem);
+        await this.cartItemsRepository.save(cartItem);
+      }
+    }
 
     const updatedCart = await this.cartRepository.findOne({
-      where: {
-        id: userCart.id,
-      },
+      where: { id: userCart.id },
       relations: ['items'],
     });
 

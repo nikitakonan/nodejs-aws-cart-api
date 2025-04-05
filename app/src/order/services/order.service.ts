@@ -16,7 +16,13 @@ function mapOrderEntityToOrder(orderEntity: OrderEntity): Order {
     })),
     cartId: orderEntity.cart.id,
     address: orderEntity.delivery,
-    statusHistory: [], // TODO add status history
+    statusHistory: [
+      {
+        status: orderEntity.status,
+        comment: orderEntity.comments,
+        timestamp: new Date().valueOf(),
+      },
+    ], // TODO add status history
   };
 }
 
@@ -32,7 +38,7 @@ export class OrderService {
   async getAll() {
     this.logger.log('get all orders');
     const orders = await this.orderRepository.find({
-      relations: ['cart'],
+      relations: ['cart', 'cart.items'],
     });
     return orders.map(mapOrderEntityToOrder);
   }
@@ -47,7 +53,7 @@ export class OrderService {
   }
 
   async create(data: CreateOrderPayload) {
-    const { total, cartId, userId, address } = data;
+    const { total, cartId, userId, address, items } = data;
     const orderEntity = new OrderEntity();
     const cart = new CartEntity();
     cart.id = cartId;
@@ -61,7 +67,20 @@ export class OrderService {
 
     const created = await this.orderRepository.save(orderEntity);
 
-    return mapOrderEntityToOrder(created);
+    return {
+      id: created.id,
+      userId: created.userId,
+      items,
+      cartId: cart.id,
+      address: created.delivery,
+      statusHistory: [
+        {
+          status: created.status,
+          comment: created.comments,
+          timestamp: new Date().valueOf(),
+        },
+      ], // TODO add status history
+    };
   }
 
   // TODO add  type

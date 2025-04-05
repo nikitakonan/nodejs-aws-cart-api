@@ -1,21 +1,21 @@
 import {
-  Controller,
-  Get,
-  Delete,
-  Put,
+  BadRequestException,
   Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Put,
   Req,
   UseGuards,
-  HttpStatus,
-  HttpCode,
-  BadRequestException,
 } from '@nestjs/common';
 import { BasicAuthGuard } from '../auth';
 import { OrderService } from '../order';
 import { AppRequest, getUserIdFromRequest } from '../shared';
 import { calculateCartTotal } from './models-rules';
 import { CartService } from './services';
-import { CartItem } from './models';
+import { CartItem, CartStatuses } from './models';
 import { CreateOrderDto, PutCartPayload } from 'src/order/type';
 
 @Controller('api/profile/cart')
@@ -83,8 +83,8 @@ export class CartController {
       address: body.address,
       total,
     });
-    // TODO change status to ordered
-    await this.cartService.removeByUserId(userId);
+
+    await this.cartService.updateCartStatus(cartId, CartStatuses.ORDERED);
 
     return {
       order,

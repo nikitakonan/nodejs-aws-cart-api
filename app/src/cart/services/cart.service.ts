@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { type Cart } from '../models';
+import { type Cart, CartStatuses } from '../models';
 import { type PutCartPayload } from 'src/order/type';
 import { CartEntity } from '../entities/cart.entity';
 import { CartItemEntity } from '../entities/cart-item.entity';
@@ -106,5 +106,9 @@ export class CartService {
 
   async removeByUserId(userId: string) {
     await this.cartRepository.delete({ user_id: userId });
+  }
+
+  async updateCartStatus(cartId: string, status: CartStatuses) {
+    await this.cartRepository.update({ id: cartId }, { status });
   }
 }

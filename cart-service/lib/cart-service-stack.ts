@@ -18,12 +18,24 @@ export class CartServiceStack extends cdk.Stack {
       deploy: true,
       restApiName: 'Cart Service',
       description: 'This is the Cart Service API',
+      defaultCorsPreflightOptions: {
+        allowHeaders: apigateway.Cors.DEFAULT_HEADERS,
+        allowMethods: apigateway.Cors.ALL_METHODS,
+        allowCredentials: true,
+        allowOrigins: ['*'],
+      },
     });
 
     api.root.addProxy({
       defaultIntegration: new apigateway.LambdaIntegration(lambdaHandler, {
         proxy: true,
       }),
+      defaultCorsPreflightOptions: {
+        allowHeaders: apigateway.Cors.DEFAULT_HEADERS,
+        allowMethods: apigateway.Cors.ALL_METHODS,
+        allowCredentials: true,
+        allowOrigins: ['https://d49ix6oj1ubeg.cloudfront.net/', 'http://localhost:3000'],
+      },
     });
 
     new cdk.CfnOutput(this, 'CartServiceUrl', {

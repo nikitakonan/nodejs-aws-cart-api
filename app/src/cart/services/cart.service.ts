@@ -36,19 +36,28 @@ export class CartService {
     private cartItemsRepository: Repository<CartItemEntity>,
   ) {}
 
-  async findByUserId(userId: string): Promise<Cart | undefined> {
-    const cartEntity = await this.cartRepository.findOne({
-      where: { user_id: userId },
-      relations: ['items'],
-    });
-    if (!cartEntity) {
-      return;
-    }
+  async findByUserId(userId: string) {
+    this.logger.log(`Finding cart for user ${userId}`);
+    try {
+      const cartEntity = await this.cartRepository.findOne({
+        where: { user_id: userId },
+        relations: ['items'],
+      });
+      if (!cartEntity) {
+        this.logger.log(`No cart found for user ${userId}`);
+        return;
+      }
 
-    return mapCartEntityToCart(cartEntity);
+      this.logger.log(`Found cart for user ${userId}`, cartEntity);
+      return mapCartEntityToCart(cartEntity);
+    } catch (error) {
+      this.logger.error('Error finding cart', error);
+      throw error;
+    }
   }
 
   async createByUserId(user_id: string): Promise<Cart> {
+    this.logger.log(`Creating cart for user ${user_id}`);
     const cartEntity = new CartEntity();
     cartEntity.user_id = user_id;
     cartEntity.items = [];

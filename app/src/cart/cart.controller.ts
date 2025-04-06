@@ -6,6 +6,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Logger,
   Put,
   Req,
   UseGuards,
@@ -20,6 +21,8 @@ import { CreateOrderDto, PutCartPayload } from 'src/order/type';
 
 @Controller('api/profile/cart')
 export class CartController {
+  private readonly logger = new Logger(CartController.name);
+
   constructor(
     private cartService: CartService,
     private orderService: OrderService,
@@ -29,9 +32,11 @@ export class CartController {
   @UseGuards(BasicAuthGuard)
   @Get()
   async findUserCart(@Req() req: AppRequest): Promise<CartItem[]> {
+    this.logger.log('GET /api/profile/cart');
     const cart = await this.cartService.findOrCreateByUserId(
       getUserIdFromRequest(req),
     );
+    this.logger.log(`Found cart ${cart.id} with ${cart.items.length} items`);
 
     return cart.items;
   }
